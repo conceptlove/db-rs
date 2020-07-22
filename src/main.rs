@@ -1,3 +1,7 @@
+pub mod data;
+pub mod db;
+pub mod machine;
+
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
