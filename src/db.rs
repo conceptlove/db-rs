@@ -1,11 +1,16 @@
-use crate::data::{A, E, V};
-use std::collections::BTreeSet;
+use crate::data::{Fact, A, E, V};
+use im::OrdSet;
 
-pub struct Db {
-    eav: BTreeSet<(E, A, V)>,
+pub struct State {
+    eav: OrdSet<Fact>,
 }
 
-pub trait Database {
-    fn get(e: E, a: A) -> V;
-    fn set(e: E, a: A, v: V);
+impl State {
+    fn add(self, fact: Fact) -> Self {
+        self
+    }
+    fn get(&self, e: E, a: A) {}
+    fn set(&self, e: E, a: A, v: V) {}
+    fn update(&self, e: E) {}
+    fn bootstrap() {}
 }

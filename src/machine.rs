@@ -1,4 +1,4 @@
-fn unit(n: i32) -> i32 {
+pub fn unit(n: i32) -> i32 {
     if n < 0 {
         -1
     } else {
@@ -7,6 +7,6 @@ fn unit(n: i32) -> i32 {
 }
 
 /// Attempts to capture the essence of constructing an i32 from a series of digits.
-fn i32(n: i32, ch: u8) -> i32 {
+pub fn i32(n: i32, ch: u8) -> i32 {
     n * 10 + (ch as i32) * unit(n)
 }
