@@ -11,3 +11,4 @@ rustyline = "6.2.0"
 nom = "5.1.2"
 uuid = { version = "0.8", features = ["serde", "v4", "v5"] }
 im = "15.0.0"
+clap = "2.33.1"
