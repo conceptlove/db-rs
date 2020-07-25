@@ -1,30 +1,74 @@
-use nom::bytes::streaming::take_while1;
-use nom::character::is_space;
-use nom::character::streaming::space1;
-use nom::multi::separated_nonempty_list;
-use nom::IResult;
+use crate::data::*;
+use Expr::*;
 
 // Experimenting. Broken.
 
-fn tokens(input: &str) -> IResult<&str, Vec<&str>> {
-    let token = take_while1(|x| !is_space(x));
-    let spaces = space1;
-    separated_nonempty_list(spaces, token)(input)
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub enum ParseError {
+    InvalidCharacter(char),
+    NotImplemented,
 }
+
+pub type Ast = Expr<ParseError>;
+
+fn expr(cur: Expr<ParseError>, ch: char) -> Expr<ParseError> {
+    match ch {
+        ',' => match cur {
+            Nil => Nil,
+            _ => Many(cur.into(), Nil.into()),
+        },
+
+        '\n' | '\r' => match cur {
+            Nil => Nil,
+            Seq(a, b) if a.is_seq() => Seq(a, b),
+            _ => ((cur, Nil).into(), Nil).into(),
+        },
+
+        ' ' | '\t' => match cur {
+            Nil => Nil,
+            Ident(_) => (cur, Nil).into(),
+            Seq(a, exp) => (*a, expr(*exp, ch)).into(),
+            _ => Failure(ParseError::NotImplemented),
+        },
+
+        'a'..='z' | 'A'..='Z' | '_' => match cur {
+            Nil => Expr::Ident(ch.to_string()),
+            Ident(x) => Ident(x + &ch.to_string()),
+            Seq(a, exp) => (*a, expr(*exp, ch)).into(),
+            _ => Failure(ParseError::NotImplemented),
+        },
+
+        _ => Failure(ParseError::InvalidCharacter(ch)),
+    }
+}
+
+impl std::str::FromStr for Expr<ParseError> {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut exp = Expr::Nil;
+        for ch in s.chars() {
+            exp = expr(exp, ch);
+        }
+        Ok(exp)
+    }
+}
+
+// fn expr(input: &str) -> IResult<&str, Expr> {
+//     let mut cur = Expr::Nil;
+
+//     let token = alpha1;
+//     separated_nonempty_list(space1, token)(input)
+// }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data;
 
     #[test]
-    fn tokens_test() {
-        assert_eq!(
-            tokens("X = 123"),
-            Ok((
-                "",
-                vec![data::token("X"), data::token("="), data::token("123")]
-            ))
-        )
+    fn expr_test() {
+        assert_eq!("   ".parse(), Ok(Nil));
+        assert_eq!("a".parse(), Ok(ident("a")));
+        assert_eq!("a b".parse(), Ok(two(ident("a"), ident("b"))));
     }
 }

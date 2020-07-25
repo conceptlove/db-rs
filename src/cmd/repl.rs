@@ -1,34 +1,24 @@
-// use crate::db;
+use crate::data;
+use crate::data::*;
+use crate::db;
+use crate::parsing;
 use crate::reg;
+use data::Id::Id;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
+use Expr::*;
 
-type State = im::Vector<String>;
-
-enum Msg {
-    Token(String),
-}
-
-enum Cmd {
-    NoOp,
-    StdOut(String),
-}
-
-fn update(state: &mut State, msg: Msg) -> (&State, Cmd) {
-    match msg {
-        Msg::Token(name) => match name.as_ref() {
-            "id" => {
-                let ent = state.last().unwrap();
-                let uuid = reg::get(&ent);
-                (state, Cmd::StdOut(format!("{} id = {}", ent, uuid)))
-            }
-
-            n => {
-                state.push_back(n.to_owned());
-                (state, Cmd::NoOp)
-            }
+fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
+    return match exp {
+        Seq(a, b) => match (*a, *b) {
+            (Ident(e), Ident(a)) => db
+                .get(&Id(reg::get(&e)), &Id(reg::get(&a)))
+                .into_iter()
+                .collect(),
+            _ => Failure(parsing::ParseError::NotImplemented),
         },
-    }
+        _ => Nil,
+    };
 }
 
 pub fn run() {
@@ -38,26 +28,15 @@ pub fn run() {
     //     println!("Creating new session...");
     // }
 
-    let mut state = im::Vector::new();
-    // let mut db = db::State::new().bootstrap();
+    let db = &mut db::State::new();
+    db.bootstrap();
 
     loop {
         match rl.readline("> ") {
             Ok(line) => {
-                let tokens: Vec<&str> = line.split_terminator(" ").collect();
+                let expr: parsing::Ast = line.parse().unwrap();
 
-                // match tokens {
-                //     [e, a] => println!("{:?}", db.get(e, a)),
-                // }
-
-                for token in tokens {
-                    let (_, cmd) = update(&mut state, Msg::Token(token.to_owned()));
-
-                    match cmd {
-                        Cmd::NoOp => (),
-                        Cmd::StdOut(x) => println!("{}", x),
-                    }
-                }
+                println!("{}", eval(db, expr));
 
                 rl.add_history_entry(line.as_str());
             }

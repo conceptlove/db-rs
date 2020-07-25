@@ -2,6 +2,7 @@ pub mod bootstrap;
 pub mod data;
 pub mod db;
 pub mod machine;
+pub mod parsing;
 pub mod reg;
 pub mod cmd {
     pub mod repl;
