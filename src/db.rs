@@ -22,7 +22,7 @@ impl State {
 
     pub fn get(&self, e: &E, a: &A) -> Vec<V> {
         self.eav
-            .range(Fact(*e, *a, V::Start)..Fact(*e, *a, V::End))
+            .range(Fact(*e, *a, V::Start)..=Fact(*e, *a, V::End))
             .map(|f| f.value())
             .collect()
     }

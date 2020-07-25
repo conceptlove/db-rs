@@ -79,6 +79,12 @@ impl<E> FromIterator<V> for Expr<E> {
     }
 }
 
+impl<E> From<Vec<V>> for Expr<E> {
+    fn from(vec: Vec<V>) -> Self {
+        vec.into_iter().collect()
+    }
+}
+
 #[derive(Hash, Eq, PartialEq, PartialOrd, Ord, Clone)]
 pub struct Fact(pub E, pub A, pub V);
 
@@ -121,7 +127,7 @@ impl fmt::Display for Id {
         use self::Id::*;
 
         match self {
-            Id(uuid) => write!(f, "{}", uuid),
+            Id(uuid) => write!(f, "&{}", uuid),
             Hash(n) => write!(f, "@{:x}", n),
         }
     }
@@ -154,7 +160,7 @@ impl fmt::Display for crate::parsing::ParseError {
 impl fmt::Display for crate::parsing::Ast {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Nil => write!(f, ""),
+            Nil => write!(f, "(nil)"),
             Ident(x) => write!(f, "{}", x),
             Many(a, b) => write!(f, "{} {}", a, b),
             Seq(a, b) => write!(f, "{}, {}", a, b),

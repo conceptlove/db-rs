@@ -11,10 +11,7 @@ use Expr::*;
 fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
     return match exp {
         Seq(a, b) => match (*a, *b) {
-            (Ident(e), Ident(a)) => db
-                .get(&Id(reg::get(&e)), &Id(reg::get(&a)))
-                .into_iter()
-                .collect(),
+            (Ident(e), Ident(a)) => db.get(&Id(reg::get(&e)), &Id(reg::get(&a))).into(),
             _ => Failure(parsing::ParseError::NotImplemented),
         },
         _ => Nil,
@@ -24,9 +21,9 @@ fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
 pub fn run() {
     let mut rl = Editor::<()>::new();
 
-    // if rl.load_history("session.txt").is_err() {
-    //     println!("Creating new session...");
-    // }
+    if rl.load_history(".session").is_err() {
+        println!("Creating new session...");
+    }
 
     let db = &mut db::State::new();
     db.bootstrap();
@@ -54,6 +51,6 @@ pub fn run() {
             }
         }
 
-        // rl.save_history("session.txt").unwrap();
+        rl.save_history(".session").unwrap();
     }
 }
