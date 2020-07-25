@@ -32,10 +32,14 @@ fn expr(cur: Expr<ParseError>, ch: char) -> Expr<ParseError> {
         },
 
         'a'..='z' | 'A'..='Z' | '_' => match cur {
-            Nil => Expr::Ident(ch.to_string()),
+            Nil => Ident(ch.to_string()),
             Ident(x) => Ident(x + &ch.to_string()),
             Seq(a, exp) => (*a, expr(*exp, ch)).into(),
             _ => Failure(ParseError::NotImplemented),
+        },
+
+        '=' => match cur {
+            _ => Op(cur.into(), "=".into(), Nil.into()),
         },
 
         _ => Failure(ParseError::InvalidCharacter(ch)),
@@ -50,6 +54,7 @@ impl std::str::FromStr for Expr<ParseError> {
         for ch in s.chars() {
             exp = expr(exp, ch);
         }
+
         Ok(exp)
     }
 }

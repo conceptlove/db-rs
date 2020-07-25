@@ -43,12 +43,8 @@ pub fn get(key: &str) -> Uuid {
     Uuid::new_v5(&ROOT, key.as_bytes())
 }
 
-// const ROOT: Uuid = Uuid::from_bytes([
-//     59, 61, 190, 239, 163, 188, 64, 80, 180, 51, 46, 6, 58, 57, 12, 149,
-// ]);
-
 pub const ROOT: Uuid = uuid![0x3b3dbeef, 0xa3bc, 0x4050, 0xb433, 0x2e063a390c95];
-pub const NAME: Uuid = uuid![0x3817b373, 0x9a8d, 0x423d, 0x9f0d, 0xcd94e9a714ed];
+pub const NAME: Uuid = uuid![0x5c183daa, 0xd2cd, 0x5f7e, 0xbde0, 0x12035f85dfc4];
 
 #[cfg(test)]
 mod tests {

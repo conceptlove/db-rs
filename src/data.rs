@@ -1,15 +1,22 @@
-pub use im::ordset;
 use std::fmt;
 use std::iter::FromIterator;
 use uuid::Uuid;
 
-#[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord, Copy, Clone)]
-pub enum Id {
-    Id(uuid::Uuid),
-    Hash(u64),
-}
+pub type Id = uuid::Uuid;
+pub type OrdSet<A> = std::collections::BTreeSet<A>;
 
-pub type OrdSet<A> = im::OrdSet<A>;
+#[macro_export]
+macro_rules! ordset {
+    ( $($x:expr), *) => {
+        {
+        let set = &mut OrdSet::new();
+        $(
+            set.insert($x);
+        )*
+        (*set).clone()
+    }
+    };
+}
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Expr<E> {
@@ -58,7 +65,7 @@ pub type A = Id;
 pub enum V {
     Start,
     Ref(Id),
-    Int(u32),
+    Int(i32),
     Str(String),
     End,
 }
@@ -71,8 +78,14 @@ impl<E> From<V> for Expr<E> {
 
 impl<E> FromIterator<V> for Expr<E> {
     fn from_iter<I: IntoIterator<Item = V>>(iter: I) -> Self {
-        let mut exp = Nil;
-        for v in iter {
+        let mut i = iter.into_iter();
+
+        let mut exp = match i.next() {
+            Some(v) => v.into(),
+            None => Nil,
+        };
+
+        for v in i {
             exp = Many(exp.into(), Value(v).into());
         }
         exp
@@ -85,7 +98,25 @@ impl<E> From<Vec<V>> for Expr<E> {
     }
 }
 
-#[derive(Hash, Eq, PartialEq, PartialOrd, Ord, Clone)]
+impl From<&str> for V {
+    fn from(s: &str) -> Self {
+        V::Str(s.to_owned())
+    }
+}
+
+impl From<uuid::Uuid> for V {
+    fn from(id: uuid::Uuid) -> Self {
+        V::Ref(id)
+    }
+}
+
+impl From<i32> for V {
+    fn from(x: i32) -> Self {
+        V::Int(x)
+    }
+}
+
+#[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord, Clone)]
 pub struct Fact(pub E, pub A, pub V);
 
 impl Fact {
@@ -97,8 +128,8 @@ impl Fact {
         self.1
     }
 
-    pub fn value(&self) -> V {
-        self.2.clone()
+    pub fn value(&self) -> &V {
+        &self.2
     }
 }
 
@@ -119,17 +150,6 @@ impl<E> From<(Expr<E>, Expr<E>)> for Expr<E> {
 impl<E> From<&str> for Expr<E> {
     fn from(s: &str) -> Expr<E> {
         Ident(s.to_string())
-    }
-}
-
-impl fmt::Display for Id {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use self::Id::*;
-
-        match self {
-            Id(uuid) => write!(f, "&{}", uuid),
-            Hash(n) => write!(f, "@{:x}", n),
-        }
     }
 }
 
@@ -160,10 +180,10 @@ impl fmt::Display for crate::parsing::ParseError {
 impl fmt::Display for crate::parsing::Ast {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Nil => write!(f, "(nil)"),
+            Nil => write!(f, "Nil"),
             Ident(x) => write!(f, "{}", x),
-            Many(a, b) => write!(f, "{} {}", a, b),
-            Seq(a, b) => write!(f, "{}, {}", a, b),
+            Many(a, b) => write!(f, "{}, {}", a, b),
+            Seq(a, b) => write!(f, "{} {}", a, b),
             Op(a, op, b) => write!(f, "{} {} {}", a, op, b),
             Not(x) => write!(f, "! {}", x),
             Failure(x) => write!(f, "(Failure: {})", x),
@@ -173,30 +193,21 @@ impl fmt::Display for crate::parsing::Ast {
 }
 
 pub fn id(st: &String) -> Id {
-    let uuid = uuid::Uuid::parse_str(st).unwrap();
-    Id::Id(uuid)
-}
-
-impl std::str::FromStr for Id {
-    type Err = uuid::Error;
-
-    fn from_str(s: &str) -> Result<Id, Self::Err> {
-        uuid::Uuid::parse_str(s).map(|x| Id::Id(x))
-    }
+    uuid::Uuid::parse_str(st).unwrap()
 }
 
 pub trait Edge {
-    fn set(&self, v: V) -> Fact;
+    fn set<T: Into<V>>(&self, value: T) -> Fact;
 }
 
 impl Edge for (String, String) {
-    fn set(&self, v: V) -> Fact {
-        Fact(id(&self.0), id(&self.1), v)
+    fn set<T: Into<V>>(&self, v: T) -> Fact {
+        Fact(id(&self.0), id(&self.1), v.into())
     }
 }
 
 impl Edge for (Uuid, Uuid) {
-    fn set(&self, v: V) -> Fact {
-        Fact(Id::Id(self.0), Id::Id(self.1), v)
+    fn set<T: Into<V>>(&self, v: T) -> Fact {
+        Fact(self.0, self.1, v.into())
     }
 }

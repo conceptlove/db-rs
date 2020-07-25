@@ -3,18 +3,26 @@ use crate::data::*;
 use crate::db;
 use crate::parsing;
 use crate::reg;
-use data::Id::Id;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use Expr::*;
 
 fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
     return match exp {
+        Ident(x) => Op(
+            Ident(x.clone()).into(),
+            "=".into(),
+            Value(data::V::Ref(reg::get(&x))).into(),
+        ),
         Seq(a, b) => match (*a, *b) {
-            (Ident(e), Ident(a)) => db.get(&Id(reg::get(&e)), &Id(reg::get(&a))).into(),
+            (Ident(e), Ident(a)) => {
+                let eid = reg::get(&e);
+                let aid = reg::get(&a);
+                db.get(&eid, &aid).into()
+            }
             _ => Failure(parsing::ParseError::NotImplemented),
         },
-        _ => Nil,
+        _ => exp,
     };
 }
 
@@ -33,7 +41,7 @@ pub fn run() {
             Ok(line) => {
                 let expr: parsing::Ast = line.parse().unwrap();
 
-                println!("{}", eval(db, expr));
+                println!("\n{}\n", eval(db, expr));
 
                 rl.add_history_entry(line.as_str());
             }
