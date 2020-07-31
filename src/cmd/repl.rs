@@ -15,12 +15,17 @@ fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
             Value(data::V::Ref(reg::get(&x))).into(),
         ),
         Seq(a, b) => match (*a, *b) {
+            (a, Nil) => eval(db, a),
             (Ident(e), Ident(a)) => {
                 let eid = reg::get(&e);
                 let aid = reg::get(&a);
                 db.get(&eid, &aid).into()
             }
             _ => Failure(parsing::ParseError::NotImplemented),
+        },
+        Op(a, op, b) => match (*a.clone(), op.as_str(), *b.clone()) {
+            // (Ident(id), "=", b) => ,
+            _ => Op(a, op, b),
         },
         _ => exp,
     };

@@ -76,8 +76,14 @@ impl<E> From<V> for Expr<E> {
     }
 }
 
-impl<E> FromIterator<V> for Expr<E> {
-    fn from_iter<I: IntoIterator<Item = V>>(iter: I) -> Self {
+impl<E> From<&V> for Expr<E> {
+    fn from(v: &V) -> Expr<E> {
+        Value(v.clone())
+    }
+}
+
+impl<'a, E> FromIterator<&'a V> for Expr<E> {
+    fn from_iter<I: IntoIterator<Item = &'a V>>(iter: I) -> Self {
         let mut i = iter.into_iter();
 
         let mut exp = match i.next() {
@@ -86,14 +92,14 @@ impl<E> FromIterator<V> for Expr<E> {
         };
 
         for v in i {
-            exp = Many(exp.into(), Value(v).into());
+            exp = Many(exp.into(), Value(v.clone()).into());
         }
         exp
     }
 }
 
-impl<E> From<Vec<V>> for Expr<E> {
-    fn from(vec: Vec<V>) -> Self {
+impl<E> From<Vec<&V>> for Expr<E> {
+    fn from(vec: Vec<&V>) -> Self {
         vec.into_iter().collect()
     }
 }
@@ -131,6 +137,21 @@ impl Fact {
     pub fn value(&self) -> &V {
         &self.2
     }
+
+    pub fn eav(self) -> (E, A, V) {
+        let Fact(e, a, v) = self;
+        (e, a, v)
+    }
+
+    pub fn aev(self) -> (A, E, V) {
+        let Fact(e, a, v) = self;
+        (a, e, v)
+    }
+
+    pub fn ave(self) -> (A, V, E) {
+        let Fact(e, a, v) = self;
+        (a, v, e)
+    }
 }
 
 pub fn ident<E>(name: &str) -> Expr<E> {
@@ -139,6 +160,10 @@ pub fn ident<E>(name: &str) -> Expr<E> {
 
 pub fn two<E>(a: Expr<E>, b: Expr<E>) -> Expr<E> {
     Seq(Box::new(a), Box::new(b))
+}
+
+pub fn eq<E>(a: Expr<E>, b: Expr<E>) -> Expr<E> {
+    Op(Box::new(a), "=".to_string(), Box::new(b))
 }
 
 impl<E> From<(Expr<E>, Expr<E>)> for Expr<E> {

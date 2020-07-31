@@ -1,3 +1,5 @@
+#![feature(or_patterns)]
+
 pub mod bootstrap;
 pub mod data;
 pub mod db;
