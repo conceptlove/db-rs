@@ -1,4 +1,5 @@
 #![feature(or_patterns)]
+#![feature(box_patterns)]
 
 pub mod bootstrap;
 pub mod data;
