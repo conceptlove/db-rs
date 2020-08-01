@@ -9,7 +9,7 @@ pub type OrdSet<A> = std::collections::BTreeSet<A>;
 macro_rules! ordset {
     ( $($x:expr), *) => {
         {
-        let set = &mut OrdSet::new();
+        let set = &mut crate::data::OrdSet::new();
         $(
             set.insert($x);
         )*
@@ -57,6 +57,19 @@ impl<E> Expr<E> {
             _ => false,
         }
     }
+
+    pub fn map<F>(&self, f: F) -> Self
+    where
+        E: Clone,
+        F: Fn(&Self) -> Self,
+    {
+        return match self {
+            Op(box a, op, box b) => Op(f(a).into(), op.clone(), f(b).into()),
+            Many(box a, box b) => Many(f(a).into(), f(b).into()),
+            Seq(box a, box b) => Seq(f(a).into(), f(b).into()),
+            _ => (*self).clone(),
+        };
+    }
 }
 
 pub type E = Id;
@@ -82,8 +95,32 @@ impl<E> From<&V> for Expr<E> {
     }
 }
 
-impl<'a, E> FromIterator<&'a V> for Expr<E> {
-    fn from_iter<I: IntoIterator<Item = &'a V>>(iter: I) -> Self {
+impl<E> From<Id> for Expr<E> {
+    fn from(id: Id) -> Expr<E> {
+        Value(id.into())
+    }
+}
+
+impl<E> From<Fact> for Expr<E> {
+    fn from(f: Fact) -> Expr<E> {
+        eq(f.entity(), f.value())
+    }
+}
+
+impl<E, T> From<Vec<T>> for Expr<E>
+where
+    T: Clone + Into<Expr<E>>,
+{
+    fn from(exps: Vec<T>) -> Expr<E> {
+        match exps.as_slice() {
+            [] => Nil,
+            [x] => (*x).clone().into(),
+            _ => exps.into_iter().collect(),
+        }
+    }
+}
+impl<'a, E, T: Into<Expr<E>>> FromIterator<T> for Expr<E> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut i = iter.into_iter();
 
         let mut exp = match i.next() {
@@ -92,15 +129,9 @@ impl<'a, E> FromIterator<&'a V> for Expr<E> {
         };
 
         for v in i {
-            exp = Many(exp.into(), Value(v.clone()).into());
+            exp = Many(exp.into(), v.into().into());
         }
         exp
-    }
-}
-
-impl<E> From<Vec<&V>> for Expr<E> {
-    fn from(vec: Vec<&V>) -> Self {
-        vec.into_iter().collect()
     }
 }
 
@@ -162,8 +193,12 @@ pub fn two<E>(a: Expr<E>, b: Expr<E>) -> Expr<E> {
     Seq(Box::new(a), Box::new(b))
 }
 
-pub fn eq<E>(a: Expr<E>, b: Expr<E>) -> Expr<E> {
-    Op(Box::new(a), "=".to_string(), Box::new(b))
+pub fn eq<E, T, V>(a: T, b: V) -> Expr<E>
+where
+    T: Into<Expr<E>>,
+    V: Into<Expr<E>>,
+{
+    Op(Box::new(a.into()), "=".to_string(), Box::new(b.into()))
 }
 
 impl<E> From<(Expr<E>, Expr<E>)> for Expr<E> {
@@ -205,7 +240,7 @@ impl fmt::Display for crate::parsing::ParseError {
 impl fmt::Display for crate::parsing::Ast {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Nil => write!(f, "Nil"),
+            Nil => write!(f, "()"),
             Ident(x) => write!(f, "{}", x),
             Many(a, b) => write!(f, "{}, {}", a, b),
             Seq(a, b) => write!(f, "{} {}", a, b),

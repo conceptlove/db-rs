@@ -4,9 +4,10 @@
 pub mod bootstrap;
 pub mod data;
 pub mod db;
+mod field;
 pub mod machine;
 pub mod parsing;
-pub mod reg;
+mod reg;
 pub mod cmd {
     pub mod repl;
 }

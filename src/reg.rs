@@ -8,11 +8,13 @@ macro_rules! uuid {
         use uuid::Uuid;
 
         let e: u64 = $e;
+        let a: u32 = $a;
+
         Uuid::from_bytes([
-            (($a >> 24) & 0xff) as u8,
-            (($a >> 16) & 0xff) as u8,
-            (($a >> 8) & 0xff) as u8,
-            ($a & 0xff) as u8,
+            ((a >> 24) & 0xff) as u8,
+            ((a >> 16) & 0xff) as u8,
+            ((a >> 8) & 0xff) as u8,
+            (a & 0xff) as u8,
             (($b >> 8) & 0xff) as u8,
             ($b & 0xff) as u8,
             (($c >> 8) & 0xff) as u8,
@@ -44,7 +46,8 @@ pub fn get(key: &str) -> Uuid {
 }
 
 pub const ROOT: Uuid = uuid![0x3b3dbeef, 0xa3bc, 0x4050, 0xb433, 0x2e063a390c95];
-pub const NAME: Uuid = uuid![0x5c183daa, 0xd2cd, 0x5f7e, 0xbde0, 0x12035f85dfc4];
+pub const FIRST: Uuid = uuid![0x00000000, 0x0000, 0x0000, 0x0000, 0x000000000000];
+pub const LAST: Uuid = uuid![0xffffffff, 0xffff, 0xffff, 0xffff, 0xffffffffffff];
 
 #[cfg(test)]
 mod tests {

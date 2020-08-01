@@ -29,6 +29,7 @@ impl Reducer<char> for Ast {
             (Seq(a, exp), _) => two(*a, exp.update(ch)),
             (Op(a, op, b), _) => Op(a, op, b.update(ch).into()),
 
+            (Failure(x), _) => Failure(x),
             _ => Failure(ParseError::InvalidCharacter(ch)),
         }
     }

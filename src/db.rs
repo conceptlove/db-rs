@@ -1,4 +1,5 @@
 use crate::data::{Fact, OrdSet, A, E, V};
+use crate::reg;
 
 #[derive(Debug)]
 pub struct State {
@@ -35,8 +36,19 @@ impl State {
         self.eav.range(start..end)
     }
 
-    pub fn get(&self, e: &E, a: &A) -> Vec<&V> {
+    pub fn all(&self, e: &E, a: &A) -> Vec<&V> {
         self.find(e, a).map(|(_, _, v)| v).collect()
+    }
+
+    pub fn for_entity(&self, e: &E) -> Vec<Fact> {
+        let start = (*e, reg::FIRST, V::Start);
+        let end = (*e, reg::LAST, V::End);
+
+        self.eav
+            .range(start..end)
+            .cloned()
+            .map(|(e, a, v)| Fact(e, a, v))
+            .collect()
     }
 
     pub fn set<T: Into<V>>(&mut self, e: E, a: A, v: T) {
@@ -61,7 +73,7 @@ mod tests {
         let db = &mut State::new();
         db.set(get("a"), get("b"), 1);
 
-        assert_eq!(db.get(&get("a"), &get("b")), vec![&1.into()]);
+        assert_eq!(db.all(&get("a"), &get("b")), vec![&1.into()]);
     }
 
     #[test]
@@ -69,6 +81,6 @@ mod tests {
         let db = &mut State::new();
         db.bootstrap();
         println!("{:?}", db);
-        assert_eq!(db.get(&get("name"), &get("name")), vec![&"name".into()])
+        assert_eq!(db.all(&get("name"), &get("name")), vec![&"name".into()])
     }
 }
