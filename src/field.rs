@@ -26,7 +26,7 @@ impl Field {
 impl<E> From<Field> for Expr<E> {
     fn from(f: Field) -> Expr<E> {
         let id = get("id");
-        let binding = get("binding");
+        let alias = get("alias");
         let name = get("name");
         let desc = get("desc");
 
@@ -34,7 +34,7 @@ impl<E> From<Field> for Expr<E> {
 
         vec![
             (fid, id).set(fid),
-            (fid, binding).set(f.name),
+            (fid, alias).set(f.name),
             (fid, name).set(f.name),
             (fid, desc).set(f.desc),
         ]

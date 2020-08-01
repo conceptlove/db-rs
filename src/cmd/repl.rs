@@ -10,7 +10,7 @@ fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
     return match exp {
         Value(V::Ref(id)) => eval(db, db.for_entity(&id).into()),
 
-        Ident(x) => eval(db, db.all(&reg::get(&x), &reg::get("binding")).into()),
+        Ident(x) => eval(db, db.all(&reg::get(&x), &reg::get("alias")).into()),
 
         Seq(box a, box Nil) => eval(db, a),
         Seq(box Ident(e), box Ident(a)) => {
@@ -34,7 +34,7 @@ fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
 
 fn prettify(db: &db::State, exp: &parsing::Ast) -> parsing::Ast {
     return match exp {
-        Value(V::Ref(id)) => db.all(id, &reg::get("binding")).into(),
+        Value(V::Ref(id)) => db.all(id, &reg::get("alias")).into(),
         _ => exp.map(|e| prettify(db, e)),
     };
 }
