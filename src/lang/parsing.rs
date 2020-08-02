@@ -1,4 +1,4 @@
-use crate::data::*;
+use crate::lang::*;
 use crate::machine::*;
 use Expr::*;
 
@@ -6,7 +6,7 @@ impl Reducer<char> for Expr {
     fn update(&self, ch: char) -> Self {
         match (self.clone(), ch) {
             (Nil, _) => ch.into(),
-            (Value(V::Int(n)), '0'..='9') => Value(V::Int(n.update((ch as u8) - 48))),
+            (Int(n), '0'..='9') => Int(n.update((ch as u8) - 48)),
             (Ident(x), 'a'..='z' | 'A'..='Z' | '_') => Ident(x + &ch.to_string()),
             (Debug(x), 'a'..='z' | 'A'..='Z' | '_') => Debug(x + &ch.to_string()),
 
@@ -35,7 +35,7 @@ impl From<char> for Expr {
     fn from(ch: char) -> Expr {
         match ch {
             'a'..='z' | 'A'..='Z' | '_' => Ident(ch.to_string()),
-            '0'..='9' => Value(V::Int((ch as i32) - 48)),
+            '0'..='9' => Int((ch as i32) - 48),
             '=' => Expr::Op(Nil.into(), ch.to_string(), Nil.into()),
             '/' => Debug("".to_string()),
             ',' | '.' | '\n' | '\r' | ' ' | '\t' => Nil,

@@ -2,12 +2,12 @@
 #![feature(box_patterns)]
 
 pub mod bootstrap;
-pub mod data;
+pub mod color;
 pub mod db;
-mod field;
+pub mod field;
+pub mod lang;
 pub mod machine;
-pub mod parsing;
-mod reg;
+pub mod store;
 pub mod cmd {
     pub mod repl;
 }

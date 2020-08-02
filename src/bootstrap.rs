@@ -1,27 +1,42 @@
-use crate::data::*;
-// use crate::field::*;
-use crate::{ordset, reg};
-use reg::get;
+use crate::field::*;
+use crate::store::Fact;
 
-// const NAME: Field = Field {
-//     name: "name",
-//     desc: "An entity's name.",
-// };
+const ID: Field = Field {
+    name: "id",
+    desc: "An entity's id.",
+};
 
-pub fn bootstrap() -> OrdSet<Fact> {
-    let name = get("name");
-    let id = get("id");
-    let desc = get("desc");
-    let alias = get("alias");
+const NAME: Field = Field {
+    name: "name",
+    desc: "An entity's name.",
+};
 
-    ordset![
-        (name, alias).set("name"),
-        (name, name).set("name"),
-        (name, id).set(name),
-        (name, desc).set("A node's name."),
-        (id, id).set(id),
-        (id, alias).set("id"),
-        (id, name).set("id"),
-        (id, desc).set("The UUID for a node.")
-    ]
+const DESC: Field = Field {
+    name: "desc",
+    desc: "A short description of an entity.",
+};
+
+pub fn bootstrap() -> Vec<Fact> {
+    let mut facts = vec![];
+
+    facts.append(&mut ID.into());
+    facts.append(&mut NAME.into());
+    facts.append(&mut DESC.into());
+
+    facts
+
+    // vec![
+    //     fact(name, alias, ident("name")),
+    //     fact(name, name, "name"),
+    //     fact(name, id, name),
+    //     fact(name, desc, "A node's name."),
+    //     fact(id, id, id),
+    //     fact(id, alias, ident("id")),
+    //     fact(id, name, "id"),
+    //     fact(id, desc, "The UUID for a node."),
+    //     fact(desc, id, desc),
+    //     fact(desc, alias, ident("desc")),
+    //     fact(desc, name, "desc"),
+    //     fact(desc, desc, "A short description of a node."),
+    // ]
 }

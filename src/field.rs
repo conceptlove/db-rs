@@ -1,5 +1,5 @@
-use crate::data::{Edge, Expr, Id};
-use crate::reg::get;
+use crate::lang::{id, Id};
+use crate::store::{fact, ident, Fact};
 
 #[macro_export]
 macro_rules! field {
@@ -19,25 +19,24 @@ pub struct Field {
 
 impl Field {
     fn id(&self) -> Id {
-        get(&self.name)
+        id::get(&self.name)
     }
 }
 
-impl From<Field> for Expr {
-    fn from(f: Field) -> Expr {
-        let id = get("id");
-        let alias = get("alias");
-        let name = get("name");
-        let desc = get("desc");
+impl From<Field> for Vec<Fact> {
+    fn from(f: Field) -> Vec<Fact> {
+        let id = id::get("id");
+        let alias = id::get("alias");
+        let name = id::get("name");
+        let desc = id::get("desc");
 
         let fid = f.id();
 
         vec![
-            (fid, id).set(fid),
-            (fid, alias).set(f.name),
-            (fid, name).set(f.name),
-            (fid, desc).set(f.desc),
+            fact(fid, id, fid),
+            fact(fid, alias, ident(f.name)),
+            fact(fid, name, f.name),
+            fact(fid, desc, f.desc),
         ]
-        .into()
     }
 }

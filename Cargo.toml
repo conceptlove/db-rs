@@ -1,5 +1,5 @@
 [package]
-name = "concept-db"
+name = "conceptdb"
 version = "0.1.0"
 authors = ["Jeff Peterson <jeff@yak.sh>"]
 edition = "2018"

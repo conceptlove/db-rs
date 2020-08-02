@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-// The bootstrap registry.
+pub type Id = uuid::Uuid;
 
 #[macro_export]
 macro_rules! uuid {
@@ -39,6 +39,10 @@ macro_rules! format_uuid {
         // let e = vec![r[2], r[3], r[4], r[5], r[6]];
         format!("uuid![0x{:x}, 0x{:x}, 0x{:x}, 0x{:x}, 0x]", a, b, c, d)
     }};
+}
+
+pub fn id(st: &String) -> Id {
+    Id::parse_str(st).unwrap()
 }
 
 pub fn get(key: &str) -> Uuid {

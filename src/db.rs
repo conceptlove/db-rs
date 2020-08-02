@@ -1,5 +1,7 @@
-use crate::data::{fact, Fact, OrdSet, A, E, V};
-use crate::reg;
+use crate::lang::id;
+use crate::store::{fact, Fact, A, E, V};
+
+pub type OrdSet<A> = std::collections::BTreeSet<A>;
 
 #[derive(Debug)]
 pub struct State {
@@ -53,8 +55,8 @@ impl State {
     }
 
     pub fn for_entity(&self, e: &E) -> Vec<Fact> {
-        let start = (*e, reg::FIRST, V::Start);
-        let end = (*e, reg::LAST, V::End);
+        let start = (*e, id::FIRST, V::Start);
+        let end = (*e, id::LAST, V::End);
 
         self.eav
             .range(start..end)
@@ -92,14 +94,13 @@ impl State {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::reg::get;
 
     #[test]
     fn add_and_get_test() {
         let db = &mut State::new();
-        db.set(&get("a"), &get("b"), 1);
+        db.set(&id::get("a"), &id::get("b"), 1);
 
-        assert_eq!(db.all(&get("a"), &get("b")), vec![&1.into()]);
+        assert_eq!(db.all(&id::get("a"), &id::get("b")), vec![&1.into()]);
     }
 
     #[test]
@@ -107,6 +108,9 @@ mod tests {
         let db = &mut State::new();
         db.bootstrap();
         println!("{:?}", db);
-        assert_eq!(db.all(&get("name"), &get("name")), vec![&"name".into()])
+        assert_eq!(
+            db.all(&id::get("name"), &id::get("name")),
+            vec![&"name".into()]
+        )
     }
 }
