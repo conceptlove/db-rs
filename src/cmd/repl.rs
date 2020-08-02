@@ -1,12 +1,11 @@
 use crate::data::*;
 use crate::db;
-use crate::parsing;
 use crate::reg;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use Expr::*;
 
-fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
+fn eval(db: &mut db::State, exp: Expr) -> Expr {
     return match exp {
         Debug(x) => {
             db.toggle(&reg::get("debug"), &reg::get(&x));
@@ -14,7 +13,7 @@ fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
         }
         Value(V::Ref(id)) => eval(db, db.for_entity(&id).into()),
 
-        Ident(x) => eval(db, db.all(&reg::get(&x), &reg::get("alias")).into()),
+        Ident(x) => eval(db, db.all(&reg::get(&x), &reg::get("id")).into()),
 
         Seq(box a, box Nil) => eval(db, a),
         Seq(box Ident(e), box Ident(a)) => {
@@ -40,7 +39,7 @@ fn eval(db: &mut db::State, exp: parsing::Ast) -> parsing::Ast {
     };
 }
 
-fn prettify(db: &db::State, exp: &parsing::Ast) -> parsing::Ast {
+fn prettify(db: &db::State, exp: &Expr) -> Expr {
     return match exp {
         Value(V::Ref(id)) => Expr::from(db.all(id, &reg::get("alias"))).or(V::Ref(*id)),
         _ => exp.map(|e| prettify(db, e)),
@@ -61,7 +60,7 @@ pub fn run() {
         match rl.readline("> ") {
             Ok(line) => {
                 let debug = reg::get("debug");
-                let expr: parsing::Ast = line.parse().unwrap();
+                let expr: Expr = line.parse().unwrap();
                 let evaled = eval(db, expr.clone());
                 let pretty = prettify(db, &evaled);
 

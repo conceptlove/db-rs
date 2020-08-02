@@ -23,8 +23,8 @@ impl Field {
     }
 }
 
-impl<E> From<Field> for Expr<E> {
-    fn from(f: Field) -> Expr<E> {
+impl From<Field> for Expr {
+    fn from(f: Field) -> Expr {
         let id = get("id");
         let alias = get("alias");
         let name = get("name");

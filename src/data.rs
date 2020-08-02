@@ -19,21 +19,27 @@ macro_rules! ordset {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum Expr<E> {
+pub enum ExprError {
+    InvalidCharacter(char),
+    NotImplemented,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub enum Expr {
     Nil,
     Debug(String),
     Ident(String),
-    Many(Box<Expr<E>>, Box<Expr<E>>),
-    Seq(Box<Expr<E>>, Box<Expr<E>>),
-    Op(Box<Expr<E>>, String, Box<Expr<E>>),
-    Failure(E),
-    Not(Box<Expr<E>>),
+    Many(Box<Expr>, Box<Expr>),
+    Seq(Box<Expr>, Box<Expr>),
+    Op(Box<Expr>, String, Box<Expr>),
+    Failure(ExprError),
+    Not(Box<Expr>),
     Value(V),
 }
 
 use Expr::*;
 
-impl<E: Eq> Expr<E> {
+impl Expr {
     // pub fn map<F>(&self, f: F) -> Self
     // where
     //     F: Fn(&Self) -> Self,
@@ -59,7 +65,7 @@ impl<E: Eq> Expr<E> {
         }
     }
 
-    pub fn or<T: Into<Expr<E>>>(self, v: T) -> Self {
+    pub fn or<T: Into<Expr>>(self, v: T) -> Self {
         if self == Nil {
             v.into()
         } else {
@@ -93,35 +99,35 @@ pub enum V {
     End,
 }
 
-impl<E> From<V> for Expr<E> {
-    fn from(v: V) -> Expr<E> {
+impl From<V> for Expr {
+    fn from(v: V) -> Expr {
         Value(v)
     }
 }
 
-impl<E> From<&V> for Expr<E> {
-    fn from(v: &V) -> Expr<E> {
+impl From<&V> for Expr {
+    fn from(v: &V) -> Expr {
         Value(v.clone())
     }
 }
 
-impl<E> From<Id> for Expr<E> {
-    fn from(id: Id) -> Expr<E> {
+impl From<Id> for Expr {
+    fn from(id: Id) -> Expr {
         Value(id.into())
     }
 }
 
-impl<E> From<Fact> for Expr<E> {
-    fn from(f: Fact) -> Expr<E> {
+impl From<Fact> for Expr {
+    fn from(f: Fact) -> Expr {
         eq(f.entity(), f.value())
     }
 }
 
-impl<E, T> From<Vec<T>> for Expr<E>
+impl<T> From<Vec<T>> for Expr
 where
-    T: Clone + Into<Expr<E>>,
+    T: Clone + Into<Expr>,
 {
-    fn from(exps: Vec<T>) -> Expr<E> {
+    fn from(exps: Vec<T>) -> Expr {
         match exps.as_slice() {
             [] => Nil,
             [x] => (*x).clone().into(),
@@ -129,7 +135,7 @@ where
         }
     }
 }
-impl<'a, E, T: Into<Expr<E>>> FromIterator<T> for Expr<E> {
+impl<'a, T: Into<Expr>> FromIterator<T> for Expr {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut i = iter.into_iter();
 
@@ -205,38 +211,38 @@ pub fn fact<T: Into<V>>(e: E, a: A, v: T) -> Fact {
     Fact(e, a, v.into())
 }
 
-pub fn ident<E>(name: &str) -> Expr<E> {
+pub fn ident(name: &str) -> Expr {
     Ident(name.to_string())
 }
 
-pub fn two<E>(a: Expr<E>, b: Expr<E>) -> Expr<E> {
+pub fn two(a: Expr, b: Expr) -> Expr {
     Seq(Box::new(a), Box::new(b))
 }
 
-pub fn op<E, T, V>(a: T, op: &str, b: V) -> Expr<E>
+pub fn op<T, V>(a: T, op: &str, b: V) -> Expr
 where
-    T: Into<Expr<E>>,
-    V: Into<Expr<E>>,
+    T: Into<Expr>,
+    V: Into<Expr>,
 {
     Op(Box::new(a.into()), op.to_string(), Box::new(b.into()))
 }
 
-pub fn eq<E, T, V>(a: T, b: V) -> Expr<E>
+pub fn eq<T, V>(a: T, b: V) -> Expr
 where
-    T: Into<Expr<E>>,
-    V: Into<Expr<E>>,
+    T: Into<Expr>,
+    V: Into<Expr>,
 {
     op(a, "=", b)
 }
 
-impl<E> From<(Expr<E>, Expr<E>)> for Expr<E> {
-    fn from((a, b): (Expr<E>, Expr<E>)) -> Expr<E> {
+impl From<(Expr, Expr)> for Expr {
+    fn from((a, b): (Expr, Expr)) -> Expr {
         two(a, b)
     }
 }
 
-impl<E> From<&str> for Expr<E> {
-    fn from(s: &str) -> Expr<E> {
+impl From<&str> for Expr {
+    fn from(s: &str) -> Expr {
         Ident(s.to_string())
     }
 }
@@ -255,9 +261,9 @@ impl fmt::Display for V {
     }
 }
 
-impl fmt::Display for crate::parsing::ParseError {
+impl fmt::Display for ExprError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use crate::parsing::ParseError::*;
+        use ExprError::*;
 
         match self {
             InvalidCharacter(ch) => write!(f, "Invalid character: {:?}", ch),
@@ -266,7 +272,7 @@ impl fmt::Display for crate::parsing::ParseError {
     }
 }
 
-impl fmt::Display for crate::parsing::Ast {
+impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Nil => write!(f, "()"),

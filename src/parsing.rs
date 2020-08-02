@@ -2,17 +2,7 @@ use crate::data::*;
 use crate::machine::*;
 use Expr::*;
 
-// Experimenting. Broken.
-
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub enum ParseError {
-    InvalidCharacter(char),
-    NotImplemented,
-}
-
-pub type Ast = Expr<ParseError>;
-
-impl Reducer<char> for Ast {
+impl Reducer<char> for Expr {
     fn update(&self, ch: char) -> Self {
         match (self.clone(), ch) {
             (Nil, _) => ch.into(),
@@ -36,13 +26,13 @@ impl Reducer<char> for Ast {
 
             (exp, ' ' | '\t') => exp,
             (Failure(x), _) => Failure(x),
-            _ => Failure(ParseError::InvalidCharacter(ch)),
+            _ => Failure(ExprError::InvalidCharacter(ch)),
         }
     }
 }
 
-impl From<char> for Ast {
-    fn from(ch: char) -> Ast {
+impl From<char> for Expr {
+    fn from(ch: char) -> Expr {
         match ch {
             'a'..='z' | 'A'..='Z' | '_' => Ident(ch.to_string()),
             '0'..='9' => Value(V::Int((ch as i32) - 48)),
@@ -55,8 +45,8 @@ impl From<char> for Ast {
     }
 }
 
-impl std::str::FromStr for Expr<ParseError> {
-    type Err = ParseError;
+impl std::str::FromStr for Expr {
+    type Err = ExprError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut exp = Expr::Nil;
