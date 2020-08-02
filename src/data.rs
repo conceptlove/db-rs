@@ -21,6 +21,7 @@ macro_rules! ordset {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Expr<E> {
     Nil,
+    Debug(String),
     Ident(String),
     Many(Box<Expr<E>>, Box<Expr<E>>),
     Seq(Box<Expr<E>>, Box<Expr<E>>),
@@ -32,7 +33,7 @@ pub enum Expr<E> {
 
 use Expr::*;
 
-impl<E> Expr<E> {
+impl<E: Eq> Expr<E> {
     // pub fn map<F>(&self, f: F) -> Self
     // where
     //     F: Fn(&Self) -> Self,
@@ -58,6 +59,14 @@ impl<E> Expr<E> {
         }
     }
 
+    pub fn or<T: Into<Expr<E>>>(self, v: T) -> Self {
+        if self == Nil {
+            v.into()
+        } else {
+            self
+        }
+    }
+
     pub fn map<F>(&self, f: F) -> Self
     where
         E: Clone,
@@ -78,6 +87,7 @@ pub type A = Id;
 pub enum V {
     Start,
     Ref(Id),
+    Bool(bool),
     Int(i32),
     Str(String),
     End,
@@ -153,6 +163,12 @@ impl From<i32> for V {
     }
 }
 
+impl From<bool> for V {
+    fn from(x: bool) -> Self {
+        V::Bool(x)
+    }
+}
+
 #[derive(Debug, Hash, Eq, PartialEq, PartialOrd, Ord, Clone)]
 pub struct Fact(pub E, pub A, pub V);
 
@@ -185,6 +201,10 @@ impl Fact {
     }
 }
 
+pub fn fact<T: Into<V>>(e: E, a: A, v: T) -> Fact {
+    Fact(e, a, v.into())
+}
+
 pub fn ident<E>(name: &str) -> Expr<E> {
     Ident(name.to_string())
 }
@@ -193,12 +213,20 @@ pub fn two<E>(a: Expr<E>, b: Expr<E>) -> Expr<E> {
     Seq(Box::new(a), Box::new(b))
 }
 
+pub fn op<E, T, V>(a: T, op: &str, b: V) -> Expr<E>
+where
+    T: Into<Expr<E>>,
+    V: Into<Expr<E>>,
+{
+    Op(Box::new(a.into()), op.to_string(), Box::new(b.into()))
+}
+
 pub fn eq<E, T, V>(a: T, b: V) -> Expr<E>
 where
     T: Into<Expr<E>>,
     V: Into<Expr<E>>,
 {
-    Op(Box::new(a.into()), "=".to_string(), Box::new(b.into()))
+    op(a, "=", b)
 }
 
 impl<E> From<(Expr<E>, Expr<E>)> for Expr<E> {
@@ -220,6 +248,7 @@ impl fmt::Display for V {
         match self {
             Start | End => write!(f, ""),
             Ref(id) => write!(f, "{}", id),
+            Bool(x) => write!(f, "{}", x),
             Int(n) => write!(f, "{}", n),
             Str(s) => write!(f, "{:?}", s),
         }
@@ -241,6 +270,7 @@ impl fmt::Display for crate::parsing::Ast {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Nil => write!(f, "()"),
+            Debug(x) => write!(f, "/{}", x),
             Ident(x) => write!(f, "{}", x),
             Many(a, b) => write!(f, "{}, {}", a, b),
             Seq(a, b) => write!(f, "{} {}", a, b),

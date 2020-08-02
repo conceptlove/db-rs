@@ -1,4 +1,4 @@
-use crate::data::{Fact, OrdSet, A, E, V};
+use crate::data::{fact, Fact, OrdSet, A, E, V};
 use crate::reg;
 
 #[derive(Debug)]
@@ -9,6 +9,9 @@ pub struct State {
 }
 
 impl State {
+    // TODO(jeff): Move the convenience methods to a trait.
+    // TODO(jeff): Add type Query(Range<E>, Range<A>, Range<V>)
+
     pub fn new() -> Self {
         State {
             eav: OrdSet::new(),
@@ -17,16 +20,25 @@ impl State {
         }
     }
 
-    pub fn add(&mut self, fact: Fact) {
+    pub fn add<T: Into<Fact>>(&mut self, item: T) {
+        let fact = item.into();
         self.eav.insert(fact.clone().eav());
         self.aev.insert(fact.clone().aev());
         self.ave.insert(fact.ave());
     }
 
-    pub fn add_all(&mut self, facts: OrdSet<Fact>) {
+    pub fn add_all<T: IntoIterator<Item = Fact>>(&mut self, facts: T) {
         for fact in facts {
             self.add(fact);
         }
+    }
+
+    pub fn remove<T: Into<Fact>>(&mut self, item: T) {
+        let fact = item.into();
+
+        self.eav.remove(&fact.clone().eav());
+        self.aev.remove(&fact.clone().aev());
+        self.ave.remove(&fact.ave());
     }
 
     pub fn find(&self, e: &E, a: &A) -> impl Iterator<Item = &(E, A, V)> {
@@ -51,8 +63,22 @@ impl State {
             .collect()
     }
 
-    pub fn set<T: Into<V>>(&mut self, e: E, a: A, v: T) {
-        self.add(Fact(e, a, v.into()));
+    pub fn set<T: Into<V>>(&mut self, e: &E, a: &A, v: T) {
+        self.add(Fact(*e, *a, v.into()));
+    }
+
+    pub fn has<T: Into<Fact>>(&self, f: T) -> bool {
+        self.eav.contains(&f.into().eav())
+    }
+
+    pub fn toggle(&mut self, e: &E, a: &A) {
+        if self.has(fact(*e, *a, true)) {
+            self.remove(fact(*e, *a, true));
+            self.add(fact(*e, *a, false));
+        } else {
+            self.remove(fact(*e, *a, false));
+            self.add(fact(*e, *a, true));
+        }
     }
 
     pub fn update(&self, _e: E) {}
@@ -71,7 +97,7 @@ mod tests {
     #[test]
     fn add_and_get_test() {
         let db = &mut State::new();
-        db.set(get("a"), get("b"), 1);
+        db.set(&get("a"), &get("b"), 1);
 
         assert_eq!(db.all(&get("a"), &get("b")), vec![&1.into()]);
     }

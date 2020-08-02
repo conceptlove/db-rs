@@ -15,20 +15,26 @@ pub type Ast = Expr<ParseError>;
 impl Reducer<char> for Ast {
     fn update(&self, ch: char) -> Self {
         match (self.clone(), ch) {
-            (Nil, '0'..='9') => Value(V::Int((ch as i32) - 48)),
+            (Nil, _) => ch.into(),
             (Value(V::Int(n)), '0'..='9') => Value(V::Int(n.update((ch as u8) - 48))),
-            (Nil, 'a'..='z' | 'A'..='Z' | '_') => ch.into(),
             (Ident(x), 'a'..='z' | 'A'..='Z' | '_') => Ident(x + &ch.to_string()),
-            (Nil, ',' | '.' | '\n' | '\r' | ' ' | '\t') => Nil,
+            (Debug(x), 'a'..='z' | 'A'..='Z' | '_') => Debug(x + &ch.to_string()),
+
             (exp, ',') => Many(exp.into(), Nil.into()),
+            (Many(a, box b), _) => Many(a, b.update(ch).into()),
 
             (Seq(a, b), '\n' | '\r') if a.is_seq() => Seq(a, b),
             (cur, '\n' | '\r') => ((cur, Nil).into(), Nil).into(),
 
             (exp @ Ident(_), ' ' | '\t') => two(exp, Nil),
+
+            (Seq(box a, box Nil), oper @ ('=' | '+' | '*')) => op(a, &oper.to_string(), Nil),
             (Seq(a, exp), _) => two(*a, exp.update(ch)),
+
+            (a, oper @ ('=' | '+' | '*')) => op(a, &oper.to_string(), Nil),
             (Op(a, op, b), _) => Op(a, op, b.update(ch).into()),
 
+            (exp, ' ' | '\t') => exp,
             (Failure(x), _) => Failure(x),
             _ => Failure(ParseError::InvalidCharacter(ch)),
         }
@@ -39,7 +45,11 @@ impl From<char> for Ast {
     fn from(ch: char) -> Ast {
         match ch {
             'a'..='z' | 'A'..='Z' | '_' => Ident(ch.to_string()),
+            '0'..='9' => Value(V::Int((ch as i32) - 48)),
             '=' => Expr::Op(Nil.into(), ch.to_string(), Nil.into()),
+            '/' => Debug("".to_string()),
+            ',' | '.' | '\n' | '\r' | ' ' | '\t' => Nil,
+
             _ => Nil,
         }
     }
