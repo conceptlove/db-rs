@@ -46,10 +46,11 @@ pub fn id(st: &String) -> Id {
 }
 
 pub fn get(key: &str) -> Uuid {
-    Uuid::new_v5(&ROOT, key.as_bytes())
+    Uuid::new_v5(&CORE, key.as_bytes())
 }
 
-pub const ROOT: Uuid = uuid![0x3b3dbeef, 0xa3bc, 0x4050, 0xb433, 0x2e063a390c95];
+pub const CORE: Uuid = uuid![0x3b3dbeef, 0xa3bc, 0x4050, 0xb433, 0x2e063a390c95];
+
 pub const FIRST: Uuid = uuid![0x00000000, 0x0000, 0x0000, 0x0000, 0x000000000000];
 pub const LAST: Uuid = uuid![0xffffffff, 0xffff, 0xffff, 0xffff, 0xffffffffffff];
 
@@ -60,7 +61,7 @@ mod tests {
     #[test]
     fn uuid_macro_test() {
         assert_eq!(
-            ROOT,
+            CORE,
             Uuid::parse_str("3b3dbeef-a3bc-4050-b433-2e063a390c95").unwrap()
         )
     }

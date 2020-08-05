@@ -1,4 +1,4 @@
-pub use crate::lang::id::{id, Id};
+pub use crate::id::{id, Id};
 use std::fmt;
 
 pub type E = Id;

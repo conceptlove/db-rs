@@ -1,7 +1,9 @@
-use super::id::Id;
-use crate::store::{Fact, V};
+use crate::id::Id;
+use crate::store::{Fact, A, E, V};
 use std::iter::FromIterator;
 use Expr::*;
+
+pub mod seq;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Expr {
@@ -59,6 +61,15 @@ impl Expr {
         }
     }
 
+    // pub fn walk<F>(&mut self, f: F)
+    // where
+    //     F: FnMut(&mut Self),
+    // {
+    //     match self {
+    //         Op(box a, op, box b) =>
+    //     }
+    // }
+
     pub fn map<F>(&self, f: F) -> Self
     where
         F: Fn(&Self) -> Self,
@@ -101,17 +112,21 @@ where
     Op(Box::new(a.into()), op.to_string(), Box::new(b.into()))
 }
 
-pub fn eq<T, V>(a: T, b: V) -> Expr
+pub fn eq<T, U>(a: T, b: U) -> Expr
 where
     T: Into<Expr>,
-    V: Into<Expr>,
+    U: Into<Expr>,
 {
     op(a, "=", b)
 }
 
-impl From<(Expr, Expr)> for Expr {
-    fn from((a, b): (Expr, Expr)) -> Expr {
-        two(a, b)
+impl<T, U> From<(T, U)> for Expr
+where
+    T: Into<Expr>,
+    U: Into<Expr>,
+{
+    fn from((a, b): (T, U)) -> Self {
+        two(a.into(), b.into())
     }
 }
 
@@ -177,5 +192,11 @@ impl<'a, T: Into<Expr>> FromIterator<T> for Expr {
             exp = Many(exp.into(), v.into().into());
         }
         exp
+    }
+}
+
+impl From<&(E, A, V)> for Expr {
+    fn from((e, a, v): &(E, A, V)) -> Self {
+        eq((*e, *a), v)
     }
 }

@@ -1,4 +1,5 @@
 use crate::db;
+use crate::id;
 use crate::lang::*;
 use crate::store::fact;
 use rustyline::error::ReadlineError;
@@ -7,6 +8,8 @@ use Expr::*;
 
 fn eval(db: &mut db::State, exp: Expr) -> Expr {
     return match exp {
+        Seq(box Debug(x), box Ident(name)) if x == "id" => id::get(&name).into(),
+        Debug(x) if x == "db" => db.eav.iter().collect(),
         Debug(x) => {
             db.toggle(&id::get("debug"), &id::get(&x));
             db.for_entity(&id::get("debug")).into()
@@ -39,11 +42,17 @@ fn eval(db: &mut db::State, exp: Expr) -> Expr {
     };
 }
 
-fn prettify(db: &db::State, exp: &Expr) -> Expr {
-    return match exp {
-        Op(box Ident(x), o, box Ref(id)) if o == "=" && x == "id" => op(ident(x), o, Ref(*id)),
-        Ref(id) => Expr::from(db.all(id, &id::get("alias"))).or(Ref(*id)),
-        _ => exp.map(|e| prettify(db, e)),
+fn prettify(depth: u32, db: &db::State, exp: &Expr) -> Expr {
+    return match (depth, exp) {
+        (_, Op(box Ident(x), o, box Ref(id))) if o == "=" && x == "id" => op(ident(x), o, Ref(*id)),
+        (_, Ref(id)) => Expr::from(db.all(id, &id::get("alias")))
+            .map(|s| eq(s.clone(), *id))
+            .or(Ref(*id)),
+        (0, Many(box a, box b)) => Many(
+            prettify(depth + 1, db, a).into(),
+            prettify(depth, db, b).into(),
+        ),
+        _ => exp.map(|e| prettify(depth + 1, db, e)),
     };
 }
 
@@ -63,7 +72,7 @@ pub fn run() {
                 let debug = id::get("debug");
                 let expr: Expr = line.parse().unwrap();
                 let evaled = eval(db, expr.clone());
-                let pretty = prettify(db, &evaled);
+                let pretty = prettify(0, db, &evaled);
 
                 if db.has(fact(debug, id::get("inspect"), true)) {
                     println!(

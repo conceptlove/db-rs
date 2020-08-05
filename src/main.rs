@@ -5,6 +5,7 @@ pub mod bootstrap;
 pub mod color;
 pub mod db;
 pub mod field;
+pub mod id;
 pub mod lang;
 pub mod machine;
 pub mod store;

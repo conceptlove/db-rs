@@ -1,5 +1,6 @@
-use crate::lang::{id, Id};
+use crate::id;
 use crate::store::{fact, ident, Fact};
+use id::Id;
 
 #[macro_export]
 macro_rules! field {
@@ -12,6 +13,7 @@ macro_rules! field {
     };
 }
 
+#[derive(Eq, PartialEq, Clone)]
 pub struct Field {
     pub name: &'static str,
     pub desc: &'static str,
@@ -38,5 +40,15 @@ impl From<Field> for Vec<Fact> {
             fact(fid, name, f.name),
             fact(fid, desc, f.desc),
         ]
+    }
+}
+
+impl IntoIterator for Field {
+    type Item = Fact;
+
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Vec::from(self).into_iter()
     }
 }

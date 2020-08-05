@@ -1,4 +1,4 @@
-use crate::lang::id;
+use crate::id;
 use crate::store::{fact, Fact, A, E, V};
 
 pub type OrdSet<A> = std::collections::BTreeSet<A>;

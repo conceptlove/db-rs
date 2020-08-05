@@ -14,15 +14,15 @@ impl Reducer<char> for Expr {
             (Many(a, box b), _) => Many(a, b.update(ch).into()),
 
             (Seq(a, b), '\n' | '\r') if a.is_seq() => Seq(a, b),
-            (cur, '\n' | '\r') => ((cur, Nil).into(), Nil).into(),
+            (cur, '\n' | '\r') => ((cur, Nil), Nil).into(),
 
-            (exp @ Ident(_), ' ' | '\t') => two(exp, Nil),
+            (exp @ (Ident(_) | Debug(_)), ' ' | '\t') => two(exp, Nil),
 
-            (Seq(box a, box Nil), oper @ ('=' | '+' | '*')) => op(a, &oper.to_string(), Nil),
+            (Seq(box a, box Nil), sym @ ('=' | '+' | '*')) => op(a, &sym.to_string(), Nil),
             (Seq(a, exp), _) => two(*a, exp.update(ch)),
 
-            (a, oper @ ('=' | '+' | '*')) => op(a, &oper.to_string(), Nil),
-            (Op(a, op, b), _) => Op(a, op, b.update(ch).into()),
+            (a, sym @ ('=' | '+' | '*')) => op(a, &sym.to_string(), Nil),
+            (Op(box a, sym, box b), _) => op(a, &sym, b.update(ch)),
 
             (exp, ' ' | '\t') => exp,
             (Failure(x), _) => Failure(x),
@@ -36,7 +36,7 @@ impl From<char> for Expr {
         match ch {
             'a'..='z' | 'A'..='Z' | '_' => Ident(ch.to_string()),
             '0'..='9' => Int((ch as i32) - 48),
-            '=' => Expr::Op(Nil.into(), ch.to_string(), Nil.into()),
+            '=' => op(Nil, &ch.to_string(), Nil),
             '/' => Debug("".to_string()),
             ',' | '.' | '\n' | '\r' | ' ' | '\t' => Nil,
 
