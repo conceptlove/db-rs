@@ -74,9 +74,6 @@ mod tests {
         assert_eq!("   ".parse(), Ok(Nil));
         assert_eq!("a".parse(), Ok(ident("a")));
         assert_eq!("a b".parse(), Ok(two(ident("a"), ident("b"))));
-        assert_eq!(
-            "a = b".parse(),
-            Ok(eq(Seq(ident("a").into(), Nil.into()), ident("b")))
-        );
+        assert_eq!("a = b".parse(), Ok(eq(ident("a"), ident("b"))));
     }
 }

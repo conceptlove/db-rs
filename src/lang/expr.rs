@@ -3,7 +3,7 @@ use crate::store::{Fact, A, E, V};
 use std::iter::FromIterator;
 use Expr::*;
 
-pub mod seq;
+// pub mod seq;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Expr {

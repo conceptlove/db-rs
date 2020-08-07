@@ -8,10 +8,10 @@ use termion::{
 
 use tui::{
     backend::TermionBackend,
-    layout::{Alignment, Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
-    text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    // layout::{Alignment, Constraint, Direction, Layout},
+    // style::{Color, Modifier, Style},
+    // text::{Span, Spans},
+    widgets::Paragraph, // , Block, Borders, Wrap
     Terminal,
 };
 
