@@ -24,7 +24,7 @@ impl fmt::Display for Expr {
             Bool(x) => write!(f, c!(blue, "{}"), x),
             Debug(x) => write!(f, "/{}", x),
             Ident(x) => write!(f, "{}", x),
-            Many(a, b) => write!(f, "{}, {}", a, b),
+            Many(a, b) => write!(f, "{},\n{}", a, b),
             Seq(a, b) => write!(f, "{} {}", a, b),
             Op(a, op, b) => write!(f, "{} {} {}", a, op, b),
             Not(x) => write!(f, "! {}", x),
