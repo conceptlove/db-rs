@@ -27,6 +27,8 @@ pub enum ExprError {
     NotImplemented,
 }
 
+impl std::error::Error for ExprError {}
+
 impl Expr {
     // pub fn map<F>(&self, f: F) -> Self
     // where

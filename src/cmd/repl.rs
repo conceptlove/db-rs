@@ -56,7 +56,7 @@ fn prettify(depth: u32, db: &db::State, exp: &Expr) -> Expr {
     };
 }
 
-pub fn run() {
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut rl = Editor::<()>::new();
 
     if rl.load_history(".session").is_err() {
@@ -70,7 +70,7 @@ pub fn run() {
         match rl.readline("> ") {
             Ok(line) => {
                 let debug = id::get("debug");
-                let expr: Expr = line.parse().unwrap();
+                let expr: Expr = line.parse()?;
                 let evaled = eval(db, expr.clone());
                 let pretty = prettify(0, db, &evaled);
 
@@ -99,6 +99,8 @@ pub fn run() {
             }
         }
 
-        rl.save_history(".session").unwrap();
+        rl.save_history(".session")?;
     }
+
+    Ok(())
 }
