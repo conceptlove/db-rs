@@ -49,6 +49,10 @@ pub fn get(key: &str) -> Uuid {
     Uuid::new_v5(&CORE, key.as_bytes())
 }
 
+pub fn new() -> Uuid {
+    Uuid::new_v4()
+}
+
 pub const CORE: Uuid = uuid![0x3b3dbeef, 0xa3bc, 0x4050, 0xb433, 0x2e063a390c95];
 
 pub const FIRST: Uuid = uuid![0x00000000, 0x0000, 0x0000, 0x0000, 0x000000000000];

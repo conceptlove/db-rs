@@ -1,4 +1,4 @@
-use clap::{App, SubCommand};
+use clap::{App, Arg, SubCommand};
 use conceptdb::cmd;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -8,18 +8,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .about("Command-line access to the conceptual space.")
         .subcommand(SubCommand::with_name("repl").about("Starts the ConceptDb REPL"))
         .subcommand(SubCommand::with_name("ui").about("Starts the ConceptDb UI"))
+        .subcommand(
+            SubCommand::with_name("id")
+                .about("Gets the id for the given argument")
+                .arg(Arg::with_name("name")),
+        )
         .get_matches();
 
-    match matches.subcommand_name() {
-        Some("repl") => crate::cmd::repl::run(),
-        Some("ui") => crate::cmd::ui::run(),
-        Some(cmd) => {
-            eprintln!("Command not found: {}", cmd);
-            Ok(())
+    if let Some(sub) = matches.subcommand_name() {
+        match (sub, matches.subcommand_matches(sub)) {
+            ("repl", _) => cmd::repl::run(),
+            ("ui", _) => cmd::ui::run(),
+            ("id", Some(m)) => cmd::id::run(m.value_of("name")),
+            (cmd, _) => {
+                eprintln!("Command not found: {}", cmd);
+                Ok(())
+            }
         }
-        None => {
-            eprintln!("Missing subcommand.");
-            Ok(())
-        }
+    } else {
+        eprintln!("Missing subcommand.");
+        Ok(())
     }
 }
